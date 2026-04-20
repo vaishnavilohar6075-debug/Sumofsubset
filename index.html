@@ -193,9 +193,10 @@
             overflow: auto;
             position: relative;
             border: 1px solid var(--border);
-            display: flex;
-            justify-content: center;
             padding: 2rem;
+            /* Flex centering fix for large content */
+            display: grid;
+            place-items: start center;
         }
 
         /* Comparison Dashboard */
@@ -263,7 +264,11 @@
         }
 
         /* Tree Styles */
-        .tree { display: inline-block; }
+        .tree { 
+            display: inline-block; 
+            padding: 0 50px 50px 50px;
+            min-width: max-content;
+        }
         .tree ul { padding-top: 20px; position: relative; display: flex; justify-content: center; }
         .tree li { float: left; text-align: center; list-style-type: none; position: relative; padding: 20px 5px 0 5px; }
         .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #334155; width: 50%; height: 20px; }
