@@ -1,30 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sum of Subsets Visualizer - With Tree View</title>
+    <title>Sum of Subsets: Brute Force vs Backtracking</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-body: #f8fafc;
-            --bg-card: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
+            --bg-body: #020617;
+            --bg-card: rgba(15, 23, 42, 0.8);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #6366f1;
+            --secondary: #22d3ee;
+            --accent: #f43f5e;
             --success: #10b981;
-            --success-bg: #d1fae5;
-            --danger: #ef4444;
-            --danger-bg: #fee2e2;
-            --warning: #f59e0b;
-            --warning-bg: #fef3c7;
-            --border: #e2e8f0;
-            --node-bg: #f1f5f9;
-            --node-border: #cbd5e1;
+            --border: rgba(255, 255, 255, 0.1);
+            --node-bg: #1e293b;
+            --glass: rgba(255, 255, 255, 0.03);
         }
 
         * {
@@ -41,14 +37,17 @@
             display: flex;
             justify-content: center;
             min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(34, 211, 238, 0.15) 0%, transparent 50%);
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             width: 100%;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 2rem;
         }
 
         header {
@@ -57,900 +56,700 @@
         }
 
         h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-main);
-            margin-bottom: 1.5rem;
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
         }
 
-        .controls-card {
-            background: var(--bg-card);
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            display: flex;
+        .subtitle {
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Controls Area */
+        .controls-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
             gap: 1.5rem;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
+            align-items: end;
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 24px;
             border: 1px solid var(--border);
+            backdrop-filter: blur(12px);
         }
 
         .input-group {
             display: flex;
             flex-direction: column;
-            gap: 0.5rem;
-            text-align: left;
+            gap: 0.75rem;
         }
 
         .input-group label {
-            font-size: 0.875rem;
-            font-weight: 600;
+            font-size: 0.75rem;
+            font-weight: 700;
             color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
 
-        input[type="text"],
-        input[type="number"] {
-            padding: 0.75rem 1rem;
+        input {
+            background: rgba(0, 0, 0, 0.2);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            color: white;
+            padding: 0.85rem 1.25rem;
+            border-radius: 12px;
             font-size: 1rem;
             outline: none;
-            transition: border-color 0.2s;
-            width: 250px;
-        }
-
-        input[type="number"] {
-            width: 150px;
+            transition: all 0.3s;
         }
 
         input:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
         }
 
         button {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
+            padding: 0.85rem 1.75rem;
+            border-radius: 12px;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s;
-            background-color: #e2e8f0;
-            color: var(--text-main);
-        }
-
-        button:hover:not(:disabled) {
-            background-color: #cbd5e1;
+            transition: all 0.3s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         button.primary {
-            background-color: var(--primary);
+            background: var(--primary);
             color: white;
-            margin-top: auto;
+            box-shadow: 0 8px 16px -4px rgba(99, 102, 241, 0.4);
         }
 
         button.primary:hover:not(:disabled) {
-            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -4px rgba(99, 102, 241, 0.5);
         }
 
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        button.ghost {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1px solid var(--border);
         }
 
-        .main-visualization {
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Dual Tree Area */
+        .dual-view {
             display: grid;
             grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .visualizer-card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .badge-primary { background: rgba(99, 102, 241, 0.1); color: var(--primary); border: 1px solid rgba(99, 102, 241, 0.2); }
+        .badge-secondary { background: rgba(34, 211, 238, 0.1); color: var(--secondary); border: 1px solid rgba(34, 211, 238, 0.2); }
+
+        .tree-viewport {
+            height: 450px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            overflow: auto;
+            position: relative;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        /* Comparison Dashboard */
+        .analysis-dashboard {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 2rem;
+        }
+
+        .efficiency-card {
+            background: var(--bg-card);
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            padding: 2rem;
+        }
+
+        .math-grid {
+            display: flex;
+            flex-direction: column;
             gap: 1.5rem;
         }
 
-        .card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        .math-card {
+            background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
+            border-radius: 16px;
+            padding: 1.5rem;
         }
 
-        .card.full-width {
-            grid-column: span 2;
-        }
-
-        .card h3 {
-            font-size: 1.1rem;
+        .math-card h4 {
+            font-size: 0.75rem;
             color: var(--text-muted);
+            text-transform: uppercase;
             margin-bottom: 1rem;
-            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .math-card .formula {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: #22d3ee;
+            display: block;
+        }
+
+        .math-card .output-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
 
-        .nodes-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            min-height: 60px;
-            align-items: center;
-        }
-
-        .node {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--node-bg);
-            border: 2px solid var(--node-border);
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 1.2rem;
+        .math-card .output {
+            font-size: 2.25rem;
+            font-weight: 800;
             color: var(--text-main);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
+            line-height: 1.1;
         }
 
-        @keyframes pulse {
-            0% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4);
-            }
-
-            70% {
-                transform: scale(1.1);
-                box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
-            }
-
-            100% {
-                transform: scale(1);
-                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0);
-            }
+        .chart-container {
+            height: 300px;
+            margin-top: 1rem;
         }
 
-        @keyframes popIn {
-            0% {
-                transform: scale(0.5);
-                opacity: 0;
-            }
+        /* Tree Styles */
+        .tree { display: inline-block; }
+        .tree ul { padding-top: 20px; position: relative; display: flex; justify-content: center; }
+        .tree li { float: left; text-align: center; list-style-type: none; position: relative; padding: 20px 5px 0 5px; }
+        .tree li::before, .tree li::after { content: ''; position: absolute; top: 0; right: 50%; border-top: 2px solid #334155; width: 50%; height: 20px; }
+        .tree li::after { right: auto; left: 50%; border-left: 2px solid #334155; }
+        .tree li:only-child::after, .tree li:only-child::before { display: none; }
+        .tree li:only-child { padding-top: 0; }
+        .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
+        .tree li:last-child::before { border-right: 2px solid #334155; border-radius: 0 5px 0 0; }
+        .tree li:first-child::after { border-radius: 5px 0 0 0; }
+        .tree ul ul::before { content: ''; position: absolute; top: 0; left: 50%; border-left: 2px solid #334155; width: 0; height: 20px; }
 
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-        }
-
-        .node.active {
-            border-color: var(--primary);
-            background: #e0e7ff;
-            color: var(--primary);
-            animation: pulse 1s infinite;
-        }
-
-        .node.included {
-            background: var(--success);
-            color: white;
-            border-color: var(--success);
-            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        /* --- TREE VISUALIZATION STYLES --- */
-        .tree-container {
-            overflow-x: auto;
-            overflow-y: hidden;
-            padding: 20px;
-            background: #f1f5f9;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            min-height: 350px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .tree ul {
-            padding-top: 20px;
-            position: relative;
-            transition: all 0.5s;
-            display: flex;
-            justify-content: center;
-        }
-
-        .tree li {
-            float: left;
-            text-align: center;
-            list-style-type: none;
-            position: relative;
-            padding: 20px 5px 0 5px;
-            transition: all 0.5s;
-        }
-
-        /* Rendering the connectors */
-        .tree li::before,
-        .tree li::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 50%;
-            border-top: 2px solid #94a3b8;
-            width: 50%;
-            height: 20px;
-            transition: all 0.5s;
-        }
-
-        .tree li::after {
-            right: auto;
-            left: 50%;
-            border-left: 2px solid #94a3b8;
-        }
-
-        .tree li:only-child::after,
-        .tree li:only-child::before {
-            display: none;
-        }
-
-        .tree li:only-child {
-            padding-top: 0;
-        }
-
-        .tree li:first-child::before,
-        .tree li:last-child::after {
-            border: 0 none;
-        }
-
-        .tree li:last-child::before {
-            border-right: 2px solid #94a3b8;
-            border-radius: 0 5px 0 0;
-        }
-
-        .tree li:first-child::after {
-            border-radius: 5px 0 0 0;
-        }
-
-        .tree ul ul::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            border-left: 2px solid #94a3b8;
-            width: 0;
-            height: 20px;
-        }
-
-        /* The node card */
-        .tree-node-box {
-            border: 2px solid #cbd5e1;
+        .tree-node {
+            border: 2px solid #334155;
             padding: 8px 12px;
-            background-color: var(--bg-card);
-            color: var(--text-main);
+            background: #1e293b;
+            border-radius: 12px;
             font-size: 0.85rem;
             display: inline-flex;
             flex-direction: column;
-            align-items: center;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             min-width: 80px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            position: relative;
         }
 
-        .tree-node-box .decision {
-            font-weight: 700;
-            font-size: 0.75rem;
-            color: var(--primary);
-            margin-bottom: 4px;
-        }
+        .tree-node.active { border-color: var(--primary); transform: scale(1.1); background: #312e81; box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); z-index: 10; }
+        .tree-node.found { border-color: var(--success); background: rgba(16, 185, 129, 0.2); }
+        .tree-node.pruned { border-color: var(--accent); background: rgba(244, 63, 94, 0.1); }
+        .hidden-node { visibility: hidden; pointer-events: none; }
 
-        .tree-node-box .sum-val {
-            font-weight: 600;
-        }
-
-        /* Tree Node States */
-        .tree-node-box.active {
-            border-color: var(--primary);
-            background-color: #e0e7ff;
-            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
-            transform: scale(1.1);
-            z-index: 10;
-        }
-
-        .tree-node-box.found {
-            border-color: var(--success);
-            background-color: var(--success-bg);
-            color: #065f46;
-        }
-
-        .tree-node-box.pruned {
-            border-color: var(--danger);
-            background-color: var(--danger-bg);
-            color: #991b1b;
-        }
-
-        /* Hiding unvisited branches completely, makes the tree grow */
-        .tree li.hidden-tree-node {
-            display: none;
-        }
-
-        /* --- METRICS & PLAYBACK --- */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .metric-box {
-            background: var(--bg-body);
-            padding: 1rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            text-align: center;
-        }
-
-        .metric-box span {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 0.5rem;
-        }
-
-        .metric-box .value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        .metric-box .value.found {
-            color: var(--success);
-        }
-
-        .metric-box .value.pruned {
-            color: var(--danger);
-        }
-
-        .metric-box .value.evaluate {
-            color: var(--warning);
-        }
-
-        .playback-card {
+        .playback-footer {
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
             background: var(--bg-card);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            padding: 1rem 2rem;
+            border-radius: 20px;
             border: 1px solid var(--border);
         }
 
-        .playback-controls-group {
-            display: flex;
-            gap: 0.75rem;
-        }
+        .speed-control { display: flex; align-items: center; gap: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; }
+        input[type="range"] { accent-color: var(--primary); cursor: pointer; }
 
-        .icon-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-        }
-
-        .speed-control {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .speed-control label {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-
-        .log-card {
-            background: #1e293b;
-            color: #f8fafc;
-        }
-
-        .log-card h3 {
-            color: #94a3b8;
-        }
-
-        #actionLog {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.1rem;
-            line-height: 1.5;
-        }
-
-        .log-highlight {
-            color: #38bdf8;
-            font-weight: bold;
-        }
-
-        .results-container {
+        .found-subsets-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.75rem;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
         }
 
-        .result-item {
-            background: var(--success-bg);
+        .subset-tag {
+            background: rgba(16, 185, 129, 0.1);
             color: var(--success);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
             font-weight: 600;
-            border: 1px solid var(--success);
-            animation: popIn 0.4s ease-out;
         }
 
-        /* Progress Bar */
-        .progress-container {
-            width: 100%;
-            height: 8px;
-            background: var(--border);
-            border-radius: 4px;
+        .results-mini-card {
+            background: rgba(0,0,0,0.2);
+            padding: 0.75rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
             margin-top: 1rem;
-            overflow: hidden;
         }
 
-        #progressBar {
-            height: 100%;
-            background: var(--primary);
-            width: 0%;
-            transition: width 0.3s ease;
+        .summary-text {
+            grid-column: span 2;
+            padding: 1.5rem;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            border-radius: 16px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .log-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            height: 80px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            color: #cbd5e1;
+        }
+
+        .hl-primary { color: var(--primary); font-weight: 700; }
+        .hl-secondary { color: var(--secondary); font-weight: 700; }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 1024px) {
+            .dual-view, .analysis-dashboard {
+                grid-template-columns: 1fr;
+            }
+            .efficiency-card {
+                grid-column: span 1 !important;
+            }
+            .controls-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 1rem; }
+            h1 { font-size: 1.75rem; }
+            .controls-row { padding: 1.25rem; }
+            .visualizer-card { padding: 1rem; }
+            .tree-viewport { height: 350px; }
+            .playback-footer { 
+                flex-direction: column; 
+                gap: 1.5rem; 
+                text-align: center;
+            }
+            .math-card .output { font-size: 1.75rem; }
+            footer p { font-size: 0.8rem !important; }
         }
     </style>
 </head>
-
 <body>
 
     <div class="container">
         <header>
             <h1>Sum of Subsets Visualizer</h1>
-            <div class="controls-card">
-                <div class="input-group">
-                    <label for="setInput">Set Array (comma separated)</label>
-                    <input type="text" id="setInput" value="5, 10, 12, 13">
-                </div>
-                <div class="input-group">
-                    <label for="targetInput">Target Sum</label>
-                    <input type="number" id="targetInput" value="25">
-                </div>
-                <div class="input-group">
-                    <label>&nbsp;</label>
-                    <button id="startBtn" class="primary">Generate Execution Plan</button>
-                </div>
-            </div>
+            <p class="subtitle">Direct Efficiency Comparison: Brute Force vs. Backtracking</p>
         </header>
 
-        <div class="main-visualization">
-            <div class="card">
-                <h3>Original Array</h3>
-                <div id="arrayContainer" class="nodes-container">
-                    <!-- Nodes populated by JS -->
+        <div class="controls-row">
+            <div class="input-group">
+                <label>Set Elements (comma separated)</label>
+                <input type="text" id="setInput" value="5, 10, 12, 13" placeholder="e.g. 5, 10, 12">
+            </div>
+            <div class="input-group">
+                <label>Target Sum</label>
+                <input type="number" id="targetInput" value="25" style="width: 120px;">
+            </div>
+            <button id="solveBtn" class="primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Solve & Compare
+            </button>
+        </div>
+
+        <div class="dual-view">
+            <!-- Brute Force Side -->
+            <div class="visualizer-card">
+                <div class="card-header">
+                    <h3>Approach A</h3>
+                    <span class="badge badge-secondary">Brute Force</span>
+                </div>
+                <div class="tree-viewport">
+                    <div class="tree" id="bfTree"></div>
+                </div>
+                <div class="log-box" id="bfLog">Ready for input...</div>
+                <div class="results-mini-card">
+                    <span style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Subsets Found:</span>
+                    <div id="bfResults" class="found-subsets-list"></div>
                 </div>
             </div>
 
-            <div class="card">
-                <h3>Metrics Overview</h3>
-                <div class="metrics-grid">
-                    <div class="metric-box">
-                        <span>Current Sum</span>
-                        <div id="currentSum" class="value">0</div>
-                    </div>
-                    <div class="metric-box">
-                        <span>Target Sum</span>
-                        <div id="targetSumDisp" class="value">25</div>
-                    </div>
-                    <div class="metric-box">
-                        <span>Node Status</span>
-                        <div id="currentStatus" class="value">WAITING</div>
-                    </div>
+            <!-- Backtracking Side -->
+            <div class="visualizer-card">
+                <div class="card-header">
+                    <h3>Approach B</h3>
+                    <span class="badge badge-primary">Backtracking</span>
                 </div>
-            </div>
-
-            <div class="card full-width">
-                <h3>Tree Recursion Traversal</h3>
-                <!-- Actual Tree container -->
-                <div id="treeContainer" class="tree-container">
-                    <div class="tree" id="treeRootContainer">
-                        <!-- Dynamic Tree populated here -->
-                    </div>
+                <div class="tree-viewport">
+                    <div class="tree" id="btTree"></div>
+                </div>
+                <div class="log-box" id="btLog">Ready for input...</div>
+                <div class="results-mini-card">
+                    <span style="font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Subsets Found:</span>
+                    <div id="btResults" class="found-subsets-list"></div>
                 </div>
             </div>
         </div>
 
-        <div class="playback-card">
-            <div class="playback-controls-group">
-                <button id="resetBtn" class="icon-btn" disabled>↺ Reset</button>
-                <button id="playPauseBtn" class="icon-btn primary" disabled>▶ Play</button>
-                <button id="stepForwardBtn" class="icon-btn" disabled>⏭ Step</button>
+        <div class="playback-footer">
+            <div style="display: flex; gap: 0.75rem;">
+                <button id="resetBtn" class="ghost">↺ Reset</button>
+                <button id="playPauseBtn" class="primary" style="min-width: 120px;" disabled>▶ Play</button>
             </div>
             <div class="speed-control">
-                <label>Slow</label>
-                <!-- Reversed range slider so dragging right means faster (smaller delay) -->
-                <input type="range" id="speedInput" min="100" max="1500" value="800" dir="rtl">
-                <label>Fast</label>
+                <span>Slow</span>
+                <input type="range" id="speedInput" min="50" max="1000" value="500" dir="rtl">
+                <span>Fast</span>
             </div>
         </div>
 
-        <div class="card log-card">
-            <h3>Execution Log</h3>
-            <p id="actionLog">Ready to visualize. Click 'Generate Execution Plan' to begin.</p>
-            <div class="progress-container">
-                <div id="progressBar"></div>
-            </div>
-        </div>
+        <header style="margin-top: 1rem;">
+            <h2>Efficiency Analysis</h2>
+        </header>
 
-        <div class="card">
-            <h3>Valid Subsets Found</h3>
-            <div id="resultsContainer" class="results-container">
-                <!-- Results populate here -->
-                <span style="color: var(--text-muted); font-size: 0.9rem;" id="noResultsText">None yet.</span>
+        <div class="analysis-dashboard">
+            <div class="efficiency-card">
+                <h3>Nodes Explored Comparison</h3>
+                <div class="chart-container">
+                    <canvas id="compChart"></canvas>
+                </div>
+            </div>
+
+            <div class="math-grid">
+                <div class="math-card">
+                    <h4>Brute Force Analysis</h4>
+                    <span class="formula">Formula: 2<sup>N+1</sup> - 1</span>
+                    <span class="output-label">Total Nodes Explored</span>
+                    <div id="bfMathOutput" class="output">0</div>
+                </div>
+                <div class="math-card">
+                    <h4>Backtracking Analysis</h4>
+                    <span class="formula">Formula: (Pruned State Tree)</span>
+                    <span class="output-label">Total Nodes Explored</span>
+                    <div id="btMathOutput" class="output">0</div>
+                </div>
+            </div>
+
+            <div class="efficiency-card" style="grid-column: span 2;">
+                <h3>Time Complexity Breakdown</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem;">
+                    <div class="math-card">
+                        <h4 style="color:var(--secondary)">Brute Force</h4>
+                        <p style="color:var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">Explores the entire state space tree.</p>
+                        <div class="formula">T(n) = O(2<sup>n</sup>)</div>
+                    </div>
+                    <div class="math-card">
+                        <h4 style="color:var(--primary)">Backtracking</h4>
+                        <p style="color:var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">Prunes invalid branches early.</p>
+                        <div class="formula">T(n) = O(2<sup>n</sup>) <span style="font-size:0.8rem; color:var(--success)">*Efficient Average*</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-text" id="summaryText">
+                The chart above compares the number of states visited by each algorithm. While Brute Force explores every possible branch, 
+                Backtracking uses <span class="hl-primary">Pruning</span> to skip subtrees that cannot possibly contain a solution, 
+                significantly reducing the search space for large datasets.
             </div>
         </div>
+        <footer style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); text-align: center; color: var(--text-muted); padding-bottom: 2rem; width: 100%;">
+            <p style="font-size: 0.9rem; margin: 0 auto;">Developed by</p>
+            <p style="font-size: 1.1rem; color: var(--text-main); font-weight: 700; margin-top: 0.5rem; letter-spacing: 0.05em; margin-left: auto; margin-right: auto;">
+                Swapanali Pharande • Aditi Deshmukh • Manaswi Gaikwad • Vaishnavi Lohar
+            </p>
+        </footer>
     </div>
 
     <script>
-        // System State
-        let originalArray = [];
+        // Core State
+        let currentArray = [];
         let targetSum = 0;
-
-        // Core animation state
-        let frames = [];
+        let bfFrames = [], btFrames = [];
         let currentFrameIndex = 0;
         let isPlaying = false;
-        let playbackTimeout = null;
+        let timer = null;
+        let chart = null;
 
-        // Tree structure state
-        let treeRootNode = null;
-        let nodeIdCounter = 0;
-
-        // DOM Elements
+        // Elements
         const setInput = document.getElementById('setInput');
         const targetInput = document.getElementById('targetInput');
-        const startBtn = document.getElementById('startBtn');
-
-        const arrayContainer = document.getElementById('arrayContainer');
-        const treeRootContainer = document.getElementById('treeRootContainer');
-        const resultsContainer = document.getElementById('resultsContainer');
-        const noResultsText = document.getElementById('noResultsText');
-
-        const currentSumDisplay = document.getElementById('currentSum');
-        const targetSumDisp = document.getElementById('targetSumDisp');
-        const currentStatus = document.getElementById('currentStatus');
-        const actionLog = document.getElementById('actionLog');
-        const progressBar = document.getElementById('progressBar');
-
-        const resetBtn = document.getElementById('resetBtn');
+        const solveBtn = document.getElementById('solveBtn');
         const playPauseBtn = document.getElementById('playPauseBtn');
-        const stepForwardBtn = document.getElementById('stepForwardBtn');
+        const resetBtn = document.getElementById('resetBtn');
         const speedInput = document.getElementById('speedInput');
+        const bfTree = document.getElementById('bfTree');
+        const btTree = document.getElementById('btTree');
+        const bfLog = document.getElementById('bfLog');
+        const btLog = document.getElementById('btLog');
+        const bfMathOutput = document.getElementById('bfMathOutput');
+        const btMathOutput = document.getElementById('btMathOutput');
 
-        // Initialization
-        function initializeVisualizer() {
-            const inputVal = setInput.value.trim();
-            originalArray = inputVal.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
-            targetSum = parseInt(targetInput.value);
+        // Initialize Chart
+        function initChart() {
+            const ctx = document.getElementById('compChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Brute Force', 'Backtracking'],
+                    datasets: [{
+                        label: 'Total Nodes Explored',
+                        data: [0, 0],
+                        backgroundColor: ['rgba(34, 211, 238, 0.6)', 'rgba(99, 102, 241, 0.6)'],
+                        borderColor: ['#22d3ee', '#6366f1'],
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
 
-            if (originalArray.length === 0 || isNaN(targetSum)) {
-                alert('Please enter a valid array and target sum.');
+        // --- ALGORITHMS ---
+
+        function generateBF(index, currentSum, remainingSum, arr, target, path, parentId, currentSubset) {
+            let id = Math.random().toString(36).substr(2, 9);
+            let nodeLabel = `${currentSum}, ${index + 1}, ${remainingSum}`;
+            let frame = { id, parentId, index, sum: currentSum, label: nodeLabel, type: 'eval', decision: path, subset: [...currentSubset] };
+            
+            if (currentSum === target) frame.type = 'found';
+            bfFrames.push(frame);
+
+            if (index >= arr.length) return;
+
+            // Include
+            generateBF(index + 1, currentSum + arr[index], remainingSum - arr[index], arr, target, `x${index+1}=1`, id, [...currentSubset, arr[index]]);
+            // Exclude
+            generateBF(index + 1, currentSum, remainingSum - arr[index], arr, target, `x${index+1}=0`, id, [...currentSubset]);
+        }
+
+        function generateBT(index, currentSum, remainingSum, arr, target, path, parentId, currentSubset) {
+            let id = Math.random().toString(36).substr(2, 9);
+            let nodeLabel = `${currentSum}, ${index + 1}, ${remainingSum}`;
+            let frame = { id, parentId, index, sum: currentSum, label: nodeLabel, type: 'eval', decision: path, subset: [...currentSubset] };
+            btFrames.push(frame);
+
+            if (currentSum === target) {
+                frame.type = 'found';
                 return;
             }
 
-            // Reset UI Context
-            targetSumDisp.textContent = targetSum;
-            arrayContainer.innerHTML = '';
-            originalArray.forEach((num, index) => {
-                const node = document.createElement('div');
-                node.className = 'node';
-                node.textContent = num;
-                node.id = `array-node-${index}`;
-                arrayContainer.appendChild(node);
+            if (currentSum > target || (currentSum + remainingSum < target) || index >= arr.length) {
+                frame.type = 'pruned';
+                return;
+            }
+
+            // Include
+            generateBT(index + 1, currentSum + arr[index], remainingSum - arr[index], arr, target, `x${index+1}=1`, id, [...currentSubset, arr[index]]);
+            // Exclude
+            generateBT(index + 1, currentSum, remainingSum - arr[index], arr, target, `x${index+1}=0`, id, [...currentSubset]);
+        }
+
+        // --- UI ---
+
+        function buildTreeHTML(frames) {
+            const map = {};
+            frames.forEach(f => map[f.id] = { ...f, children: [] });
+            const roots = [];
+            frames.forEach(f => {
+                if (f.parentId) map[f.parentId].children.push(map[f.id]);
+                else roots.push(map[f.id]);
             });
 
-            resultsContainer.innerHTML = '';
-            resultsContainer.appendChild(noResultsText);
-            noResultsText.style.display = 'block';
+            function render(node) {
+                let html = `<li id="node-${node.id}" class="hidden-node">
+                    <div class="tree-node">
+                        <span style="color:var(--text-muted); font-size:0.55rem; position:absolute; top:-15px; left:50%; transform:translateX(-50%); white-space:nowrap;">${node.decision}</span>
+                        <span style="font-weight:700;">${node.label}</span>
+                    </div>`;
+                if (node.children.length > 0) {
+                    html += `<ul>${node.children.map(render).join('')}</ul>`;
+                }
+                html += '</li>';
+                return html;
+            }
+            return `<ul>${roots.map(render).join('')}</ul>`;
+        }
 
-            // 1. Generate full recursion path and build Tree HTML
-            generateAlgorithmFramesAndTree();
+        function solve() {
+            currentArray = setInput.value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n));
+            targetSum = parseInt(targetInput.value);
 
-            // Setup Controls
+            if (currentArray.length === 0) return alert("Enter some numbers!");
+
+            bfFrames = []; btFrames = [];
+            const totalSum = currentArray.reduce((a, b) => a + b, 0);
+            
+            generateBF(0, 0, totalSum, currentArray, targetSum, 'START', null, []);
+            generateBT(0, 0, totalSum, currentArray, targetSum, 'START', null, []);
+
+            bfTree.innerHTML = buildTreeHTML(bfFrames);
+            btTree.innerHTML = buildTreeHTML(btFrames);
+
+            bfMathOutput.textContent = bfFrames.length;
+            btMathOutput.textContent = btFrames.length;
+
+            chart.data.datasets[0].data = [bfFrames.length, btFrames.length];
+            chart.update();
+
             currentFrameIndex = 0;
-            resetBtn.disabled = false;
-            playPauseBtn.disabled = false;
-            stepForwardBtn.disabled = false;
-
-            playPauseBtn.textContent = "▶ Play";
-            playPauseBtn.classList.add('primary');
             isPlaying = false;
-            clearTimeout(playbackTimeout);
-
+            playPauseBtn.disabled = false;
+            playPauseBtn.textContent = "▶ Play";
             renderFrame(0);
         }
 
-        // Core Algorithm pre-computation
-        function generateAlgorithmFramesAndTree() {
-            frames = [];
-            nodeIdCounter = 0;
-            treeRootNode = null;
-
-            function backtrack(index, currentSubset, currentSum, parentNode, decisionText) {
-                // Register an internal tree-node to represent this recursion call
-                let currNode = {
-                    id: nodeIdCounter++,
-                    sum: currentSum,
-                    index: index,
-                    decision: decisionText,
-                    children: []
-                };
-
-                // Link in parent's tree hierarchy
-                if (parentNode) {
-                    parentNode.children.push(currNode);
-                } else {
-                    treeRootNode = currNode;
-                }
-
-                // Framework evaluates the state of the new node we just arrived at
-                frames.push({
-                    type: 'evaluate',
-                    nodeId: currNode.id, // reference to HTML Tree element
-                    index: index,
-                    subset: [...currentSubset],
-                    sum: currentSum,
-                    message: parentNode ? `Branched path via choice: <span class="log-highlight">${decisionText}</span>. Checking Sum: <span class="log-highlight">${currentSum}</span> against Target.` : `Initializing first recursion node. Current Sum: 0.`
-                });
-
-                // Base Case 1: Exact matches
-                if (currentSum === targetSum) {
-                    frames.push({
-                        type: 'found',
-                        nodeId: currNode.id,
-                        index: index,
-                        subset: [...currentSubset],
-                        sum: currentSum,
-                        message: `✅ Found valid subset grouping equaling ${targetSum}!`
-                    });
-                    return; // Stop exploring this branch assuming no negatives
-                }
-
-                // Base Case 2: Pruning condition (sum exceeded)
-                if (currentSum > targetSum) {
-                    frames.push({
-                        type: 'pruned',
-                        nodeId: currNode.id,
-                        index: index,
-                        subset: [...currentSubset],
-                        sum: currentSum,
-                        message: `❌ Pruned: Sum (${currentSum}) exceeds target. Backtracking.`
-                    });
-                    return; // Stop exploring
-                }
-
-                // Base Case 3: Reached end of possible elements
-                if (index >= originalArray.length) {
-                    frames.push({
-                        type: 'pruned',
-                        nodeId: currNode.id,
-                        index: index,
-                        subset: [...currentSubset],
-                        sum: currentSum,
-                        message: `❌ Pruned: Reached end of array cleanly. Backtracking.`
-                    });
-                    return;
-                }
-
-                // ACTION: Include element (Left Branch)
-                backtrack(index + 1, [...currentSubset, originalArray[index]], currentSum + originalArray[index], currNode, `Inc ${originalArray[index]}`);
-
-                // ACTION: Exclude element (Right Branch)
-                backtrack(index + 1, [...currentSubset], currentSum, currNode, `Exc ${originalArray[index]}`);
-            }
-
-            // Initialize recursion
-            backtrack(0, [], 0, null, 'Root');
-
-            frames.push({
-                type: 'end',
-                nodeId: treeRootNode.id,
-                index: -1,
-                subset: [],
-                sum: 0,
-                message: '🎉 Algorithm Complete. Full tree traversed!'
-            });
-
-            // 2. Parse treeRootNode structure into HTML DOM Tree recursively
-            treeRootContainer.innerHTML = buildTreeHTML(treeRootNode);
-        }
-
-        function buildTreeHTML(node) {
-            if (!node) return '';
-
-            let html = `<li id="tree-li-${node.id}" class="hidden-tree-node">
-            <div class="tree-node-box" id="tree-node-${node.id}">
-                <span class="decision">${node.decision}</span>
-                <span class="sum-val">Sum: ${node.sum}</span>
-            </div>`;
-
-            if (node.children && node.children.length > 0) {
-                html += '<ul>';
-                for (let child of node.children) {
-                    html += buildTreeHTML(child);
-                }
-                html += '</ul>';
-            }
-
-            html += '</li>';
-            return html;
-        }
-
-        // Rendering Engine: Scrubber mechanism
         function renderFrame(index) {
-            if (index < 0 || index >= frames.length) return;
-            const frame = frames[index];
+            // Reset visibility
+            document.querySelectorAll('.hidden-node').forEach(n => {
+                n.style.visibility = 'hidden';
+            });
+            document.querySelectorAll('.tree-node').forEach(n => n.classList.remove('active', 'found', 'pruned'));
 
-            // 1. Progress Bar
-            const progressPercent = ((index + 1) / frames.length) * 100;
-            progressBar.style.width = `${progressPercent}%`;
+            // Show BF up to index
+            for (let i = 0; i <= index && i < bfFrames.length; i++) {
+                const el = document.getElementById(`node-${bfFrames[i].id}`);
+                if (el) el.style.visibility = 'visible';
+                if (i === index) el?.querySelector('.tree-node')?.classList.add('active');
+            }
 
-            // 2. Metrics & Status
-            currentSumDisplay.textContent = frame.sum;
-            currentStatus.textContent = frame.type.toUpperCase();
-
-            currentStatus.className = 'value'; // reset
-            if (frame.type === 'found') currentStatus.classList.add('found');
-            if (frame.type === 'pruned') currentStatus.classList.add('pruned');
-            if (frame.type === 'evaluate') currentStatus.classList.add('evaluate');
-
-            // 3. Log Updates
-            actionLog.innerHTML = `[Step ${index + 1}/${frames.length}] ${frame.message}`;
-
-            // 4. Array Container Visualization
-            const arrayNodes = document.querySelectorAll('#arrayContainer .node');
-            arrayNodes.forEach((node, i) => {
-                node.classList.remove('active');
-                if (i === frame.index && (frame.type !== 'end')) {
-                    node.classList.add('active'); // Highlight index element 
+            // Show BT up to index
+            for (let i = 0; i <= index && i < btFrames.length; i++) {
+                const el = document.getElementById(`node-${btFrames[i].id}`);
+                if (el) el.style.visibility = 'visible';
+                const nodeBox = el?.querySelector('.tree-node');
+                if (nodeBox) {
+                    if (btFrames[i].type === 'found') nodeBox.classList.add('found');
+                    if (btFrames[i].type === 'pruned') nodeBox.classList.add('pruned');
+                    if (i === index) nodeBox.classList.add('active');
                 }
+            }
+
+            // Logs
+            if (index < bfFrames.length) bfLog.innerHTML = `Step ${index+1}: Visited node with sum <span class="hl-secondary">${bfFrames[index].sum}</span>`;
+            if (index < btFrames.length) {
+                let msg = `Step ${index+1}: Visited sum <span class="hl-primary">${btFrames[index].sum}</span>`;
+                if (btFrames[index].type === 'pruned') msg += ` - <span style="color:var(--accent)">PRUNED</span>`;
+                if (btFrames[index].type === 'found') msg += ` - <span style="color:var(--success)">SOLVED!</span>`;
+                btLog.innerHTML = msg;
+            }
+
+            // Results
+            const bfResEl = document.getElementById('bfResults');
+            const btResEl = document.getElementById('btResults');
+            bfResEl.innerHTML = '';
+            btResEl.innerHTML = '';
+
+            const bfSolutions = [...new Set(bfFrames.slice(0, index + 1).filter(f => f.type === 'found').map(f => f.subset.join(',')))];
+            bfSolutions.forEach(s => {
+                const tag = document.createElement('span'); tag.className = 'subset-tag';
+                tag.textContent = `{${s}}`; bfResEl.appendChild(tag);
             });
 
-            // 5. Build/Restore Context for Tree based on scrubber Time
-
-            // Hide all nodes first to prepare for forward re-calc
-            const allLi = document.querySelectorAll('.tree li');
-            allLi.forEach(li => li.classList.add('hidden-tree-node'));
-
-            const allBoxes = document.querySelectorAll('.tree-node-box');
-            allBoxes.forEach(box => {
-                box.classList.remove('active', 'found', 'pruned');
+            const btSolutions = [...new Set(btFrames.slice(0, index + 1).filter(f => f.type === 'found').map(f => f.subset.join(',')))];
+            btSolutions.forEach(s => {
+                const tag = document.createElement('span'); tag.className = 'subset-tag';
+                tag.textContent = `{${s}}`; btResEl.appendChild(tag);
             });
 
-            // Step through history 0..index and unhide elements that exist in timeline
-            for (let i = 0; i <= index; i++) {
-                const historyFrame = frames[i];
-                if (historyFrame.nodeId !== undefined) {
-
-                    let targetLi = document.getElementById(`tree-li-${historyFrame.nodeId}`);
-                    if (targetLi) targetLi.classList.remove('hidden-tree-node');
-
-                    let targetBox = document.getElementById(`tree-node-${historyFrame.nodeId}`);
-                    if (targetBox) {
-                        if (historyFrame.type === 'found') targetBox.classList.add('found');
-                        if (historyFrame.type === 'pruned') targetBox.classList.add('pruned');
-
-                        // Highlight Only The "Active" play head node
-                        if (i === index) {
-                            allBoxes.forEach(b => b.classList.remove('active'));
-                            targetBox.classList.add('active');
-                        }
-                    }
-                }
-            }
-
-            // 6. Results Box population
-            resultsContainer.innerHTML = '';
-            const uniqueSubsets = new Set();
-
-            for (let i = 0; i <= index; i++) {
-                if (frames[i].type === 'found') {
-                    uniqueSubsets.add(frames[i].subset.join(","));
-                }
-            }
-
-            if (uniqueSubsets.size === 0) {
-                resultsContainer.appendChild(noResultsText);
-                noResultsText.style.display = 'block';
-            } else {
-                uniqueSubsets.forEach(subsetStr => {
-                    const resNode = document.createElement('div');
-                    resNode.className = 'result-item';
-                    resNode.textContent = `{ ${subsetStr.split(',').join(', ')} }`;
-                    resultsContainer.appendChild(resNode);
-                });
-                noResultsText.style.display = 'none';
-            }
-
-            // Ensure button states
-            if (index === frames.length - 1) {
-                pausePlayback();
-                stepForwardBtn.disabled = true;
-                playPauseBtn.disabled = true;
-            } else {
-                stepForwardBtn.disabled = false;
-                playPauseBtn.disabled = false;
-            }
-
-            // Scroll Tree horizontally to keep active node roughly center if needed
-            const activeNode = document.querySelector('.tree-node-box.active');
-            if (activeNode) {
-                activeNode.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-            }
+            // Auto-scroll
+            const active = document.querySelector('.tree-node.active');
+            if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         }
 
-        // Playback Controllers
-        function playNextFrame() {
-            if (currentFrameIndex < frames.length - 1) {
-                currentFrameIndex++;
-                renderFrame(currentFrameIndex);
-
-                if (isPlaying) {
-                    // Read speed dynamically so changing speed mid-play works
-                    const delay = parseInt(speedInput.value);
-                    playbackTimeout = setTimeout(playNextFrame, delay);
-                }
+        function play() {
+            if (currentFrameIndex >= Math.max(bfFrames.length, btFrames.length)) {
+                isPlaying = false;
+                playPauseBtn.textContent = "▶ Play";
+                return;
             }
+            renderFrame(currentFrameIndex);
+            currentFrameIndex++;
+            timer = setTimeout(play, parseInt(speedInput.value));
         }
 
-        function togglePlayback() {
+        solveBtn.addEventListener('click', solve);
+        playPauseBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
             if (isPlaying) {
-                pausePlayback();
+                playPauseBtn.textContent = "⏸ Pause";
+                play();
             } else {
-                startPlayback();
-            }
-        }
-
-        function startPlayback() {
-            if (currentFrameIndex >= frames.length - 1) return;
-            isPlaying = true;
-            playPauseBtn.textContent = "⏸ Pause";
-            playPauseBtn.classList.remove('primary');
-            playNextFrame();
-        }
-
-        function pausePlayback() {
-            isPlaying = false;
-            playPauseBtn.textContent = "▶ Play";
-            playPauseBtn.classList.add('primary');
-            clearTimeout(playbackTimeout);
-        }
-
-        // Listeners
-        startBtn.addEventListener('click', initializeVisualizer);
-
-        playPauseBtn.addEventListener('click', togglePlayback);
-
-        stepForwardBtn.addEventListener('click', () => {
-            pausePlayback();
-            if (currentFrameIndex < frames.length - 1) {
-                currentFrameIndex++;
-                renderFrame(currentFrameIndex);
+                playPauseBtn.textContent = "▶ Play";
+                clearTimeout(timer);
             }
         });
 
         resetBtn.addEventListener('click', () => {
-            pausePlayback();
+            clearTimeout(timer);
+            isPlaying = false;
             currentFrameIndex = 0;
             renderFrame(0);
-            playPauseBtn.disabled = false;
-            stepForwardBtn.disabled = false;
+            playPauseBtn.textContent = "▶ Play";
         });
 
+        initChart();
+        solve(); // Initial run
     </script>
 </body>
-
 </html>
